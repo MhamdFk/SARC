@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "248318585219",
+    "project_id": "notification-c560b",
+    "storage_bucket": "notification-c560b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248318585219:android:2c1baa7bf9fb4061f46eb6",
+        "android_client_info": {
+          "package_name": "com.example.modern"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkdFfScQAIcQJBOtxEcaTkGOdpjmiNxVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248318585219:android:2af68b72aed3886ef46eb6",
+        "android_client_info": {
+          "package_name": "com.example.projectname"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkdFfScQAIcQJBOtxEcaTkGOdpjmiNxVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -39,20 +39,10 @@ class _MapsState extends State<MapsFlutter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const NavBar(),
+      drawer:  NavBar(),
       appBar: AppBar(
         backgroundColor: Colors.grey.shade200,
         toolbarHeight: 115,
-        // leading: Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 40),
-        //   // child: IconButton(
-
-        //   //   onPressed: () {},
-        //   //   icon: const Icon(Icons.menu),
-        //   //   iconSize: 33,
-        //   //   alignment: Alignment.topCenter,
-        //   // ),
-        // ),
         title: ClipOval(
           child: Container(
             color: Colors.white,
@@ -135,18 +125,18 @@ class _MapsState extends State<MapsFlutter> {
   Future<List<LatLng>> getPolylinePoints() async {
     List<LatLng> polylineCoordinates = [];
     PolylinePoints polylinePoints = PolylinePoints();
-    // PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-    //     GOOGLE_MAPS_API_KEY,
-    //     PointLatLng(sarc.latitude, sarc.longitude),
-    //     PointLatLng(_pGooglePlex.latitude, _pGooglePlex.longitude),
-    //     travelMode: TravelMode.driving);
-    // if (result.points.isNotEmpty) {
-    //   result.points.forEach((PointLatLng point) {
-    //     polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-    //   });
-    // } else {
-    //   print(result.errorMessage);
-    // }
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        GOOGLE_MAPS_API_KEY, 
+        PointLatLng(sarc.latitude, sarc.longitude),
+        PointLatLng(_pGooglePlex.latitude, _pGooglePlex.longitude),
+        travelMode: TravelMode.driving);
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+    } else {
+      print(result.errorMessage);
+    }
     return polylineCoordinates;
   }
 
@@ -154,7 +144,7 @@ class _MapsState extends State<MapsFlutter> {
     PolylineId id = PolylineId("poly");
     Polyline polyline = Polyline(
         polylineId: id,
-        color: Colors.red,
+        color: const Color.fromARGB(255, 234, 27, 34),
         points: polylinecoordinates,
         width: 8);
     setState(() {

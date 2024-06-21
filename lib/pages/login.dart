@@ -1,24 +1,50 @@
 // ignore_for_file: prefer_const_constructors, prefer_interpolation_to_compose_strings, avoid_print
 // ignore: prefer_const_literals_to_create_immutables
 // ignore: prefer_const_literals_to_create_immutables
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:modern/Services/fire_store.dart';
 import 'package:modern/components/My_TextField.dart';
 import 'package:modern/components/my_button.dart';
 import 'package:modern/components/square_tile.dart';
-import 'package:modern/rest/rest_api.dart';
+import 'package:modern/helper/helper_function.dart';
 
-class login extends StatelessWidget {
+class login extends StatefulWidget {
   login({super.key});
 
-// text editing controllers
-  final usernamecontroller = TextEditingController();
-  final passwordcontroller = TextEditingController();
+  @override
+  State<login> createState() => _loginState();
+}
 
-//sign user in method
-  void doLogin(String email, String password) async {
-    var res = await userLogin(email.trim(), password.trim());
-    print(res.toString());
+class _loginState extends State<login> {
+  final FireStoreService fireStoreService = FireStoreService();
+
+// text editing controllers
+  final confirmUNcontroller = TextEditingController();
+
+  final confirmPWcontroller = TextEditingController();
+
+  void doLogin() async {
+    //show loading circle
+    showDialog(
+        //show loading circlr
+        context: context,
+        builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ));
+    //try sign in
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: confirmUNcontroller.text, password: confirmPWcontroller.text);
+      
+      //pop loading circle
+      if (context.mounted) Navigator.pushNamed(context, "/MyCheckBox");;
+    } on FirebaseAuthException catch (e) {
+      //pop loading circle
+      Navigator.pop(context);
+      displayMessageToUser(e.code, context);
+    }
   }
 
   @override
@@ -63,7 +89,7 @@ class login extends StatelessWidget {
                   ),
                   //username text field
                   MyTextField(
-                    controller: usernamecontroller,
+                    controller: confirmUNcontroller,
                     hintText: 'username',
                     obscureText: false,
                   ),
@@ -73,7 +99,7 @@ class login extends StatelessWidget {
                   ),
                   //password text field
                   MyTextField(
-                    controller: passwordcontroller,
+                    controller: confirmPWcontroller,
                     hintText: 'password',
                     obscureText: true,
                   ),
@@ -101,13 +127,10 @@ class login extends StatelessWidget {
                   //sign in button
                   MyButton(
                     ontap: () {
-                      if (usernamecontroller.text.isNotEmpty &&
-                          passwordcontroller.text.isNotEmpty) {
-                          doLogin(
-                            usernamecontroller.text, passwordcontroller.text);
-                        
-                        Navigator.pushNamed(context, '/MyCheckBox');
-                      } else{
+                      if (confirmUNcontroller.text.isNotEmpty &&
+                          confirmPWcontroller.text.isNotEmpty) {
+                        doLogin();
+                      } else {
                         Fluttertoast.showToast(
                             msg: 'All fields are required ',
                             textColor: Colors.red);

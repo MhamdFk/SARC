@@ -1,6 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:modern/Services/fire_store.dart';
+import 'package:modern/Services/notification_service.dart';
+import 'package:modern/helper/helper_function.dart';
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -10,11 +15,14 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
-  TextEditingController _textControllername = TextEditingController();
-  TextEditingController _textControlleremail = TextEditingController();
-  TextEditingController _textControllerpassword = TextEditingController();
-  TextEditingController _textControllerage = TextEditingController();
-  TextEditingController _textControllernumber = TextEditingController();
+  final FireStoreService fireStoreService = FireStoreService();
+  final TextEditingController _textControllername = TextEditingController();
+  final TextEditingController _textControlleremail = TextEditingController();
+  final TextEditingController _textControlleradress = TextEditingController();
+  final TextEditingController _textControllerpassword = TextEditingController();
+  final TextEditingController confirmPassword = TextEditingController();
+  final TextEditingController _textControllerage = TextEditingController();
+  final TextEditingController _textControllernumber = TextEditingController();
   bool isSwitched = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final passwordValidator = MultiValidator([
@@ -26,31 +34,64 @@ class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
   final emailValidator =
       EmailValidator(errorText: 'enter a valid email adress');
-  void sendMessegename(String messege) {
-    print(messege);
-    _textControllername.clear();
+
+  void RegisterUser() async {
+    showDialog(
+        //show loading circlr
+        context: context,
+        builder: (context) => const Center(
+              child: CircularProgressIndicator(),
+            ));
+    //password match
+    if (_textControllerpassword.text != confirmPassword.text) {
+      // pop loading circle
+      Navigator.pop(context);
+      //show error
+      displayMessageToUser("password don't match", context);
+    }
+    // try creating user
+    try {
+      //create user
+      UserCredential? userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+              email: _textControlleremail.text,
+              password: _textControllerpassword.text);
+      // Retrieve device token
+      String? deviceToken = await notificationServices.getDeviceToken();
+
+      //create a user document and add to firestore
+      createUserDocument(userCredential, deviceToken);
+
+      //pop loading circle
+      Navigator.pushNamed(context, '/MyCheckBox');
+    } on FirebaseAuthException catch (e) {
+      // pop the circle
+      Navigator.pop(context);
+      //display erroe
+      displayMessageToUser(e.code, context);
+    }
   }
 
-  void sendMessegeemail(String messege) {
-    print(messege);
-    _textControlleremail.clear();
+// create a user document
+  Future<void> createUserDocument(
+      UserCredential? userCredential, String? deviceToken) async {
+    if (userCredential != null && userCredential.user != null) {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(userCredential.user!.email)
+          .set({
+        'email': userCredential.user!.email,
+        'username': _textControllername.text,
+        'password': _textControllerpassword.text,
+        'DOB': _textControllerage.text,
+        'number': _textControllernumber.text,
+        'adress': _textControlleradress,
+        'token': deviceToken,
+      });
+    }
   }
 
-  void sendMessegepassword(String messege) {
-    print(messege);
-    _textControllerpassword.clear();
-  }
-
-  void sendMessegeage(String messege) {
-    print(messege);
-    _textControllerage.clear();
-  }
-
-  void sendMessegenumber(String messege) {
-    print(messege);
-    _textControllernumber.clear();
-  }
-
+  NotificationServices notificationServices = NotificationServices();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,13 +161,16 @@ class _SignUpState extends State<SignUp> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "Name",
+                        "Full Name",
                         style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: 18),
                       ),
-                      Text('  *' , style: TextStyle(color: Colors.red , fontSize: 20),),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
                       SizedBox(
                         height: 33,
                       ),
@@ -141,14 +185,14 @@ class _SignUpState extends State<SignUp> {
                     decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.white,
-                        hintText: "Enter your name",
+                        hintText: "Enter your full name",
                         prefixIcon: const Icon(Icons.account_circle_outlined),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10))),
                   ),
                 ),
                 const SizedBox(
-                  height: 30,
+                  height: 12,
                 ),
                 const Padding(
                   padding: EdgeInsets.only(left: 3.0),
@@ -162,7 +206,10 @@ class _SignUpState extends State<SignUp> {
                             fontWeight: FontWeight.bold,
                             fontSize: 18),
                       ),
-                      Text('  *' , style: TextStyle(color: Colors.red , fontSize: 20),),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
                       SizedBox(
                         height: 33,
                       ),
@@ -198,7 +245,10 @@ class _SignUpState extends State<SignUp> {
                             fontWeight: FontWeight.bold,
                             fontSize: 18),
                       ),
-                      Text('  *' , style: TextStyle(color: Colors.red , fontSize: 20),),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
                       SizedBox(
                         height: 33,
                       ),
@@ -230,13 +280,57 @@ class _SignUpState extends State<SignUp> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "Age",
+                        "Confirm your Password",
                         style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: 18),
                       ),
-                      Text('  *' , style: TextStyle(color: Colors.red , fontSize: 20),),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
+                      SizedBox(
+                        height: 33,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 30.0),
+                  child: TextFormField(
+                    controller: confirmPassword,
+                    keyboardType: TextInputType.emailAddress,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: "Confirm your passowrd",
+                        prefixIcon: const Icon(Icons.lock_outlined),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10))),
+                    validator: passwordValidator,
+                  ),
+                ),
+                const SizedBox(
+                  height: 12,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(left: 3.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Date of Birth",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18),
+                      ),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
                       SizedBox(
                         height: 33,
                       ),
@@ -264,7 +358,7 @@ class _SignUpState extends State<SignUp> {
                       }
                     },
                     decoration: InputDecoration(
-                      hintText: 'enter your birthday',
+                        hintText: 'enter your birthday',
                         filled: true,
                         fillColor: Colors.white,
                         prefixIcon: const Icon(Icons.calendar_month_outlined),
@@ -287,7 +381,10 @@ class _SignUpState extends State<SignUp> {
                             fontWeight: FontWeight.bold,
                             fontSize: 18),
                       ),
-                      Text('  *' , style: TextStyle(color: Colors.red , fontSize: 20),),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
                       SizedBox(
                         height: 33,
                       ),
@@ -308,6 +405,45 @@ class _SignUpState extends State<SignUp> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10))),
                   ),
+                ),
+                const SizedBox(
+                  height: 12,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(left: 3.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Adress",
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18),
+                      ),
+                      Text(
+                        '  *',
+                        style: TextStyle(color: Colors.red, fontSize: 20),
+                      ),
+                      SizedBox(
+                        height: 33,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 30.0),
+                  child: TextFormField(
+                      controller: _textControlleradress,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          hintText: "Syria-Damascus-Jaramana-Alhomsi street",
+                          prefixIcon: const Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10))),
+                      validator: emailValidator),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -347,12 +483,7 @@ class _SignUpState extends State<SignUp> {
                               _textControllerage.text.isNotEmpty &&
                               _textControllernumber.text.isNotEmpty &&
                               _formKey.currentState!.validate()) {
-                            sendMessegename(_textControllername.text);
-                            sendMessegeemail(_textControlleremail.text);
-                            sendMessegepassword(_textControllerpassword.text);
-                            sendMessegeage(_textControllerage.text);
-                            sendMessegenumber(_textControllernumber.text);
-                            Navigator.pushNamed(context, '/MyCheckBox');
+                            RegisterUser();
                           } else {
                             Fluttertoast.showToast(
                                 msg: 'All fields are required ',
@@ -423,87 +554,87 @@ class _SignUpState extends State<SignUp> {
                 const SizedBox(
                   height: 30,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/AppleOrGoggle');
-                          },
-                          child: Container(
-                              width: 130,
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey)),
-                              height: 60,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 10.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      "images/google.png",
-                                      height: 27,
-                                      width: 27,
-                                    ),
-                                    const SizedBox(
-                                      width: 10,
-                                    ),
-                                    const Text(
-                                      "Google",
-                                      style: TextStyle(fontSize: 17),
-                                    ),
-                                  ],
-                                ),
-                              )),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 30.0),
-                      child: InkWell(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/AppleOrGoggle');
-                        },
-                        child: Container(
-                            width: 130,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                color: Colors.grey,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(
-                                    Icons.apple,
-                                    size: 30,
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 10,
-                                ),
-                                Text(
-                                  "Apple",
-                                  style: TextStyle(fontSize: 17),
-                                ),
-                              ],
-                            )),
-                      ),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Row(
+                //       children: [
+                //         InkWell(
+                //           onTap: () {
+                //             Navigator.pushNamed(context, '/AppleOrGoggle');
+                //           },
+                //           child: Container(
+                //               width: 130,
+                //               decoration: BoxDecoration(
+                //                   color: Colors.white,
+                //                   borderRadius: BorderRadius.circular(12),
+                //                   border: Border.all(color: Colors.grey)),
+                //               height: 60,
+                //               child: Padding(
+                //                 padding: const EdgeInsets.only(left: 10.0),
+                //                 child: Row(
+                //                   mainAxisAlignment: MainAxisAlignment.center,
+                //                   children: [
+                //                     Image.asset(
+                //                       "images/google.png",
+                //                       height: 27,
+                //                       width: 27,
+                //                     ),
+                //                     const SizedBox(
+                //                       width: 10,
+                //                     ),
+                //                     const Text(
+                //                       "Google",
+                //                       style: TextStyle(fontSize: 17),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               )),
+                //         ),
+                //       ],
+                //     ),
+                //     const SizedBox(
+                //       width: 10,
+                //     ),
+                //     Padding(
+                //       padding: const EdgeInsets.only(right: 30.0),
+                //       child: InkWell(
+                //         onTap: () {
+                //           Navigator.pushNamed(context, '/AppleOrGoggle');
+                //         },
+                //         child: Container(
+                //             width: 130,
+                //             height: 60,
+                //             decoration: BoxDecoration(
+                //               color: Colors.white,
+                //               border: Border.all(
+                //                 color: Colors.grey,
+                //               ),
+                //               borderRadius: BorderRadius.circular(12),
+                //             ),
+                //             child: const Row(
+                //               mainAxisAlignment: MainAxisAlignment.center,
+                //               children: [
+                //                 Padding(
+                //                   padding: EdgeInsets.only(left: 8.0),
+                //                   child: Icon(
+                //                     Icons.apple,
+                //                     size: 30,
+                //                   ),
+                //                 ),
+                //                 SizedBox(
+                //                   width: 10,
+                //                 ),
+                //                 Text(
+                //                   "Apple",
+                //                   style: TextStyle(fontSize: 17),
+                //                 ),
+                //               ],
+                //             )),
+                //       ),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),

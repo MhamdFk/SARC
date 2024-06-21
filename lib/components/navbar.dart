@@ -1,11 +1,31 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:modern/components/image_picker.dart';
 
 class NavBar extends StatelessWidget {
   const NavBar({super.key});
 
+  void logout() {
+    FirebaseAuth.instance.signOut();
+  }
+
+  Future<void> _pickProfileImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? pickedImage =
+        await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedImage != null) {
+      return;
+      // Handle the picked image, you can save it to a variable or upload it
+      // For example, you can use pickedImage.path to access the image file path
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -53,12 +73,16 @@ class NavBar extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.design_services),
             title: const Text('Services'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, "/UserPage");
+            },
           ),
           ListTile(
             leading: const Icon(Icons.history),
             title: const Text('History'),
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, "/HistoryPage");
+            },
           ),
           ListTile(
             leading: const Icon(Icons.share),
